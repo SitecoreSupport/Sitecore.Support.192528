@@ -1,27 +1,42 @@
-﻿using System;
+﻿using Sitecore.Diagnostics;
+using Sitecore.Security;
+using Sitecore.Security.Accounts;
+using Sitecore.Web.UI.Sheer;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
+using System.Reflection;
 
 namespace Sitecore.Support.Applications.Security.EditUser
 {
+  /// Handles a click on the OK button.
+  /// </summary>
+  /// <remarks>
+  /// When the user clicks OK, the dialog is closed by calling
+  /// the <see cref="M:Sitecore.Web.UI.Sheer.ClientResponse.CloseWindow">CloseWindow</see> method.
   public class EditUserPage : Sitecore.Shell.Applications.Security.EditUser.EditUserPage
   {
+    /// <summary>
+    /// Type object of the base type
+    /// </summary>
+    protected Type _editUserType = typeof(Sitecore.Shell.Applications.Security.EditUser.EditUserPage);
+
     protected override void OK_Click()
     {
-      if (!this.Validate() || !this.ValidateTicket())
+      if (!(bool)this._editUserType.GetMethod("Validate", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(this, null)
+        || !(bool)this._editUserType.GetMethod("ValidateTicket", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(this, null))
       {
         return;
       }
-      User user = EditUserPage.GetUser();
+      User user = this._editUserType.GetMethod("GetUser", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, null) as User;
       Assert.IsNotNull(user, typeof(User), "User not found", new object[0]);
       UserProfile profile = user.Profile;
       Assert.IsNotNull(profile, typeof(UserProfile));
       try
       {
-        System.Collections.Generic.IEnumerable<Role> roles = from System.Web.UI.WebControls.ListItem item in this.Roles.Items
-                                                             where System.Web.Security.Roles.RoleExists(item.Value)
-                                                             select Role.FromName(item.Value);
+        // Run single select quiery to extract all existing roles for the user.
+        var existingRoles = ExistingRolesFinder.GetExistingRoles(this.Roles.Items);
+        IEnumerable<Role> roles = existingRoles.Select(roleName => Role.FromName(roleName));
         System.Web.HttpContext current = System.Web.HttpContext.Current;
         Assert.IsNotNull(current, typeof(System.Web.HttpContext));
         string text = string.Empty;
@@ -43,58 +58,59 @@ namespace Sitecore.Support.Applications.Security.EditUser
         }
         user.Roles.Replace(roles);
         bool flag = false;
-        if (Context.IsAdministrator && profile.IsAdministrator != this.IsAdministrator.Checked)
+        if (Sitecore.Context.IsAdministrator && profile.IsAdministrator != this.IsAdministrator.Checked)
         {
           profile.IsAdministrator = this.IsAdministrator.Checked;
           flag = true;
         }
-        if (EditUserPage.HasChanged(profile.FullName, this.FullName.Text))
+        if (this.HasChanged(profile.FullName, this.FullName.Text))
         {
           profile.FullName = this.FullName.Text;
           flag = true;
         }
-        if (EditUserPage.HasChanged(profile.Comment, this.Description.Text))
+        if (this.HasChanged(profile.Comment, this.Description.Text))
         {
           profile.Comment = this.Description.Text;
           flag = true;
         }
-        if (EditUserPage.HasChanged(profile.Email, this.Email.Text))
+        if (this.HasChanged(profile.Email, this.Email.Text))
         {
           profile.Email = this.Email.Text;
           flag = true;
         }
-        if (EditUserPage.HasChanged(profile.StartUrl, text))
+        if (this.HasChanged(profile.StartUrl, text))
         {
           profile.StartUrl = text;
           flag = true;
         }
-        if (EditUserPage.HasChanged(profile.ClientLanguage, this.ClientLanguage.SelectedValue) && (!string.IsNullOrEmpty(profile.ClientLanguage) || !string.IsNullOrEmpty(this.ClientLanguage.SelectedValue)))
+        if (this.HasChanged(profile.ClientLanguage, this.ClientLanguage.SelectedValue) && (!string.IsNullOrEmpty(profile.ClientLanguage) || !string.IsNullOrEmpty(this.ClientLanguage.SelectedValue)))
         {
           profile.ClientLanguage = this.ClientLanguage.SelectedValue;
           flag = true;
         }
-        if (EditUserPage.HasChanged(profile.RegionalIsoCode, this.RegionalISOCode.SelectedValue) && (!string.IsNullOrEmpty(profile.RegionalIsoCode) || !string.IsNullOrEmpty(this.RegionalISOCode.SelectedValue)))
+        if (this.HasChanged(profile.RegionalIsoCode, this.RegionalISOCode.SelectedValue) && (!string.IsNullOrEmpty(profile.RegionalIsoCode) || !string.IsNullOrEmpty(this.RegionalISOCode.SelectedValue)))
         {
           profile.RegionalIsoCode = this.RegionalISOCode.SelectedValue;
           flag = true;
         }
-        if (EditUserPage.HasChanged(profile.ContentLanguage, this.ContentLanguage.SelectedValue))
+        if (this.HasChanged(profile.ContentLanguage, this.ContentLanguage.SelectedValue))
         {
           profile.ContentLanguage = this.ContentLanguage.SelectedValue;
           flag = true;
         }
-        if (EditUserPage.HasChanged(profile.Portrait, this.Portrait.Text))
+        if (this.HasChanged(profile.Portrait, this.Portrait.Text))
         {
           profile.Portrait = this.Portrait.Text;
           flag = true;
         }
-        if (EditUserPage.HasChanged(profile.ManagedDomainNames, this.ManagedDomainsValue.Value))
+        if (this.HasChanged(profile.ManagedDomainNames, this.ManagedDomainsValue.Value))
         {
           SecurityAudit.LogManagedDomainChanged(this, user.Name, profile.ManagedDomainNames, this.ManagedDomainsValue.Value);
           profile.ManagedDomainNames = this.ManagedDomainsValue.Value;
           flag = true;
         }
-        this.SaveCustomProperties(profile, ref flag);
+        var args = new object[] { profile, flag };
+        this._editUserType.GetMethod("SaveCustomProperties", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(this, args);
         if (flag)
         {
           profile.Save();
@@ -110,6 +126,12 @@ namespace Sitecore.Support.Applications.Security.EditUser
         return;
       }
       base.OK_Click();
+    }
+
+    protected bool HasChanged(string profileValue, string controlValue)
+    {
+      return (bool)this._editUserType.GetMethod("HasChanged", BindingFlags.Static | BindingFlags.NonPublic)
+        .Invoke(null, new object[] { profileValue, controlValue });
     }
   }
 }
