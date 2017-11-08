@@ -29,7 +29,7 @@ namespace Sitecore.Support.Applications.Security.EditUser
         return;
       }
       User user = this._editUserType.GetMethod("GetUser", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, null) as User;
-      Assert.IsNotNull(user, typeof(User), "User not found", new object[0]);
+      Assert.IsNotNull(user, typeof(Sitecore.Security.Accounts.User), "User not found", new object[0]);
       UserProfile profile = user.Profile;
       Assert.IsNotNull(profile, typeof(UserProfile));
       try
@@ -125,7 +125,8 @@ namespace Sitecore.Support.Applications.Security.EditUser
         SheerResponse.Alert(string.Format("An error occurred while updating the user:\n\n{0}", ex.Message), new string[0]);
         return;
       }
-      base.OK_Click();
+      // Call base ethod of the Sitecore.Shell.Applications.Security.EditUser.EditUserPage class
+      SheerResponse.CloseWindow();
     }
 
     protected bool HasChanged(string profileValue, string controlValue)
