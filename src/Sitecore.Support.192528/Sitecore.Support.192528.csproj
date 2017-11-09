@@ -61,20 +61,13 @@
   <ItemGroup>
     <Compile Include="Applications\Security\EditUser\EditUserPage.cs" />
     <Compile Include="ExistingRolesFinder.cs" />
-    <Compile Include="obj\Debug\TemporaryGeneratedFile_036C0B5B-1481-4323-8D20-8F5ADCB23D92.cs" />
-    <Compile Include="obj\Debug\TemporaryGeneratedFile_5937a670-0e60-4077-877b-f7221da3dda1.cs" />
-    <Compile Include="obj\Debug\TemporaryGeneratedFile_E7A71F73-0F8D-4B9B-B56E-8E70B10BC5D3.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Config\Include\zzz\Sitecore.Support.192528.config" />
-    <Content Include="bin\Sitecore.Client.dll" />
-    <Content Include="bin\Sitecore.Support.192528.dll" />
-    <Content Include="bin\Sitecore.Support.192528.pdb" />
     <Content Include="sitecore\shell\Override\EditUser.xaml.xml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="bin\Sitecore.Support.192528.dll.config" />
     <Content Include="packages.config" />
     <None Include="web.config" />
   </ItemGroup>
